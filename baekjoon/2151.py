@@ -9,7 +9,7 @@ ans = 1000000000
 
 sx=sy=gx=gy=-1
 for i in range(n):
-    board.append(list(stdin.readline().strip()))
+    board.append(stdin.readline().strip())
     for j in range(n):
         if board[i][j] == '#':
             if sx == -1:
@@ -20,33 +20,39 @@ for i in range(n):
 def bfs():
     global ans
 
-    visited = [[[10000000]*4 for _ in range(n)] for _ in range(n)]
+    visited = [[False]*n for _ in range(n)]
     q = deque()
 
+    visited[sx][sy] = True
     for d in range(4):
         nx = sx + dx[d]
         ny = sy + dy[d]
 
-        if not point_validator(nx, ny):
+        if not point_validator(nx, ny, visited):
             continue
 
         if nx == gx and ny == gy:
-            return 0
+            ans = 0
+            return
         q.appendleft((nx, ny, 0, d))
-        visited[nx][ny][d] = 0
+        visited[nx][ny] = True
     while q:
         x,y,cnt,dir = q.pop()
 
         if x == gx and y == gy:
+            ans = min(ans, cnt)
+            if ans == 0:
+                return
             continue
         if board[x][y] == '.':
             nx = x + dx[dir]
             ny = y + dy[dir]
 
-            if not point_validator(nx,ny) or visited[nx][ny][dir] <= visited[x][y][dir]:
+            if not point_validator(nx,ny,visited):
                 continue
 
-            visited[nx][ny][dir] = visited[x][y][dir]
+            if not (nx == gx and ny == gy):
+                visited[nx][ny] = True
             q.appendleft((nx,ny,cnt,dir))
         else:
             for d in range(4):
@@ -56,22 +62,25 @@ def bfs():
                 nx = x + dx[d]
                 ny = y + dy[d]
 
-                if not point_validator(nx,ny):
+                if not point_validator(nx,ny,visited):
                     continue
 
-                if d == dir and visited[nx][ny][d] > visited[x][y][dir]:
-                    visited[nx][ny][d] = visited[x][y][dir]
+                if not (nx == gx and ny == gy):
+                    visited[nx][ny] = True
+                if d == dir:
                     q.appendleft((nx,ny,cnt,d))
-                elif d != dir and visited[nx][ny][d] > visited[x][y][dir]+1:
-                    visited[nx][ny][d] = visited[x][y][dir]+1
+                else:
                     q.appendleft((nx,ny,cnt+1,d))
-    return min(visited[gx][gy])
-def point_validator(x,y):
+
+def point_validator(x,y,visited):
     if x < 0 or y < 0 or x >= n or y >= n:
+        return False
+    elif visited[x][y]:
         return False
     elif board[x][y] == '*':
         return False
 
     return True
 
-print(bfs())
+bfs()
+print(ans)

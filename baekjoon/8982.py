@@ -9,7 +9,7 @@ input()
 for _ in range(n//2-1):
     sy,sx = map(int, input().split())
     ey,ex = map(int, input().split())
-    points.append([sx,sy,ey-sy,0])
+    points.append((sx,sy,ey-sy))
     size += sx*(ey-sy)
 
 input()
@@ -20,32 +20,28 @@ for _ in range(m):
     holes.append([sx,sy,ex,ey])
 
 holes.sort(key=lambda x:x[1])
-
 def solv():
-    global size
-    hole_idx = 0
-    for idx in range(n//2-1):
-        x, y, length, water = points[idx]
-        if hole_idx < m and holes[hole_idx][0] == x and holes[hole_idx][1] == y:
-            hole_idx += 1
-            renew_water(idx,-1,x,-1)
-            renew_water(idx+1, n//2, x,1)
+    hole_idx = 1
+    answer = 0
+    max_h = holes[0][0]
+    before_max_h = holes[0][0]
+    for x,y,length in points:
+        if hole_check(hole_idx,x,y,length):
+            max_h = x
 
-    for idx in range(n//2-1):
-        size -= points[idx][3]*points[idx][2]
-    print(size)
-
-def renew_water(start,end,h,op):
-    global points
-
-    for idx in range(start,end,op):
-        if idx >= len(points):
-            return
-        if points[idx][3] < h:
-            if points[idx][0] < h:
-                h = points[idx][0]
-            points[idx][3] = h
+        if x >= max_h:
+            answer += max_h*length
+        elif x >= before_max_h:
+            answer += before_max_h*length
         else:
-            break
+            answer += x*length
+            before_max_h = x
 
+    print(size-answer)
+
+def hole_check(hole_idx,x,y,length):
+    if hole_idx >= m:
+        return False
+    elif holes[hole_idx][0] == x and y <= holes[hole_idx][1] <= y+length:
+        return True
 solv()

@@ -17,8 +17,9 @@ def solv():
     check_pool()
     for pool in pools[1:]:
         height = pool[0]
-        for x,y in pool[1:]:
-            ans += height - board[x][y]
+        if height > 0:
+            for x,y in pool[1:]:
+                ans += height - board[x][y]
     print(ans)
 
 def check_pool():
@@ -36,8 +37,7 @@ def check_bfs(pool_board,sx,sy):
     pool_points = [(sx,sy)]
 
     height = board[sx][sy]
-    pool_height = 10
-    pool_num = -1
+    pool_height = 0
 
     while q:
         x,y = q.pop()
@@ -48,25 +48,25 @@ def check_bfs(pool_board,sx,sy):
                 if visited[nx][ny] == visited_num:
                     continue
                 if board[nx][ny] > height:
-                    pool_height = min(board[nx][ny], pool_height)
+                    if pool_height == 0:
+                        pool_height = board[nx][ny]
+                    else:
+                        pool_height = min(board[nx][ny], pool_height)
                     continue
 
                 visited[nx][ny] = visited_num
                 q.appendleft((nx, ny))
-                if pool_board[nx][ny] == 0:
-                    pool_points.append((nx,ny))
-                else:
-                    pool_num = pool_board[nx][ny]
+                pool_points.append((nx,ny))
             else:
                 return
 
-    if pool_num == -1:
-        pool_num = len(pools)
-        pools.append([pool_height])
-    else:
-        pools[pool_num][0] = pool_height
+    pool_num = len(pools)
+    pools.append([pool_height])
 
     for x, y in pool_points:
+        if pool_board[x][y] != 0:
+            idx = pool_board[x][y]
+            pools[idx][0] = 0
         pool_board[x][y] = pool_num
         pools[pool_num].append((x,y))
 

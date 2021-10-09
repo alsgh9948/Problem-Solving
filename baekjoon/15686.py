@@ -1,38 +1,31 @@
 from sys import stdin
 from itertools import combinations
 
-n,m = map(int, stdin.readline().strip().split())
+input = stdin.readline
 
-home = []
-store = []
+n,m = map(int, input().split())
 board = []
-
-for i in range(n):
-    board.append(stdin.readline().strip().split())
-    for j in range(n):
-        if board[i][j] == '1':
-            home.append([i,j,0])
-        elif board[i][j] == '2':
-            store.append((i,j))
+home = []
+chicken = []
+for x in range(n):
+    board.append(input().strip().split())
+    for y in range(n):
+        if board[x][y] == '1':
+            home.append((x,y))
+        elif board[x][y] == '2':
+            chicken.append((x,y))
 
 def solv():
-    ans = 1000000000
-    for comb in combinations(store,m):
-        for home_idx in range(len(home)):
-            chicken_length = 1000000000
-            for store_idx in range(m):
-                chicken_length = min(chicken_length, calc_chicken_length(home_idx,store_idx,comb))
-            home[home_idx][2] = chicken_length
+    answer = 9876543210
 
-        total_chicken_length = 0
-        for x,y,chicken_length in home:
-            total_chicken_length += chicken_length
-        ans = min(total_chicken_length,ans)
-    print(ans)
+    for comb in combinations(chicken,m):
+        total = 0
+        for sx,sy in home:
+            length = 9876543210
+            for ex,ey in comb:
+                length = min(length,abs(sx-ex)+abs(sy-ey))
+            total += length
+        answer = min(answer,total)
 
-def calc_chicken_length(home_idx, store_idx,comb):
-    hx,hy,temp = home[home_idx]
-    sx,sy = comb[store_idx]
-    return abs(hx-sx) + abs(hy-sy)
-
+    print(answer)
 solv()

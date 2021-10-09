@@ -1,16 +1,17 @@
 n,m = map(int, input().split())
-
-if m != 0:
-    answer = 0
-    nums = input().split()
-    for target in range(10 ** n):
-        flag = True
-        str_num = str(target).zfill(n)
+nums = list(map(int, input().split()))
+answer = 0
+def select_num(cnt,select):
+    global answer
+    if cnt == n:
         for num in nums:
-            if num not in str_num:
-                flag = False
-        if flag:
-            answer += 1
-    print(answer)
-else:
-    print(10**n)
+            if num not in select:
+                return
+        answer += 1
+        return
+
+    for num in range(10):
+        select_num(cnt+1,select+[num])
+
+select_num(0,[])
+print(answer)

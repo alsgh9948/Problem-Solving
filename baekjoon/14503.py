@@ -1,54 +1,44 @@
 from sys import stdin
 
+input = stdin.readline
 dx = [-1,0,1,0]
 dy = [0,1,0,-1]
-n,m = map(int, stdin.readline().strip().split())
 
-sx,sy,sd = map(int, stdin.readline().strip().split())
+n,m = map(int, input().split())
 
-board = [list(stdin.readline().strip().split()) for _ in range(n)]
+x,y,d = map(int, input().split())
 
+board = [list(map(int, input().split())) for _ in range(n)]
 
-def simul(x,y,d):
-    cnt = 1
-    visited = [[False] * m for _ in range(n)]
+def solv():
+    global x,y,d
+    answer = 1
+    visited = [[False]*m for _ in range(n)]
     visited[x][y] = True
     while True:
-        move_status = False
+        flag = False
         for _ in range(4):
-            d = 3 if d == 0 else d-1
-
+            d = (d-1)%4
             nx = x + dx[d]
             ny = y + dy[d]
-
-            if not point_validator(nx,ny,visited):
-                continue
-
-            move_status = True
-            visited[nx][ny] = True
-            x,y = nx,ny
-            cnt += 1
-            break
-        if not move_status:
+            if point_validator(nx,ny,visited):
+                visited[nx][ny] = True
+                answer += 1
+                x,y = nx,ny
+                flag = True
+                break
+        if not flag:
             nx = x - dx[d]
             ny = y - dy[d]
-            if back_check(nx,ny):
-                x,y = nx,ny
+            if board[nx][ny] == 0:
+                x,y=nx,ny
             else:
-                return cnt
-def back_check(x,y):
-    if x < 0 or y < 0 or x >= n or y >= m:
-        return False
-    elif board[x][y] == '1':
-        return False
-    return True
+                print(answer)
+                return
 def point_validator(x,y,visited):
-    if x < 0 or y < 0 or x >= n or y >= m:
+    if board[x][y] == 1:
         return False
     elif visited[x][y]:
         return False
-    elif board[x][y] == '1':
-        return False
     return True
-
-print(simul(sx,sy,sd))
+solv()

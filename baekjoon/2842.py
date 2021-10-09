@@ -1,75 +1,60 @@
 from sys import stdin
 from collections import deque
-
 input = stdin.readline
-dx = [-1,1,0,0,1,-1,1,-1]
-dy = [0,0,-1,1,1,1,-1,-1]
+dx = [-1,1,0,0,-1,1,-1, 1]
+dy = [0,0,-1,1, 1,1,-1,-1]
 
 n = int(input())
-
 board = []
-sx=sy=-1
-home_cnt = 0
-for x in range(n):
-    board.append(input().strip())
-    for y in range(n):
-        if board[x][y] == 'P':
-            sx,sy=x,y
-        elif board[x][y] == 'K':
-            home_cnt += 1
-
-stamina_board = []
-stamina_list = set()
-for x in range(n):
-    stamina_board.append(list(map(int, input().split())))
-    for num in stamina_board[x]:
-        stamina_list.add(num)
-stamina_list = sorted(list(stamina_list))
-
-visited = [[0]*n for _ in range(n)]
+targets = []
+visited = [[[0]]*n for _ in range(n)]
 visited_num = 0
+
+for x in range(n):
+    board.append(input())
+    for y in range(n):
+        if board[x][y] != '.':
+            targets.append((x,y))
+
+height = [list(map(int, input().split())) for _ in range(n)]
+ans_board = [[[] for _ in range(n)] for _ in range(n)]
 def solv():
-    low=high=0
-    answer = 9876543210
-    while low < len(stamina_list) and high < len(stamina_list):
-        if bfs(stamina_list[low],stamina_list[high]):
-            if low == high:
-                print(0)
-                return
+    set_min_max_height()
+    ans = 987654321
+    for x in range(n):
+        for y in range(n):
+            min_h,max_h,cnt = ans_board[x][y]
+            if cnt == len(targets):
+                ans = min(ans,max_h-min_h)
+    print(ans)
+def set_min_max_height():
+    global visited,visited_num,ans_board
+    for sx,sy in targets:
+        flag = False
+        visited_num += 1
+        visited[sx][sy] = visited_num
+
+        sh = height[sx][sy]
+        q = deque([(sx,sy,sh,sh)])
+        if not ans_board[sx][sy]:
+            ans_board[sx][sy] = [sh,sh,1]
+        while q:
+            x,y,min_h,max_h = q.pop()
+            if ans_board[x][y]:
+                ans_board[x][y] = [min(ans_board[x][y][0], min_h),max(ans_board[x][y][1], max_h),ans_board[x][y][2]+1]
             else:
-                answer = min(answer,abs(stamina_list[low]-stamina_list[high]))
-                low += 1
-        else:
-            high += 1
-    print(answer)
-def bfs(low,high):
-    global visited,visited_num
-    if stamina_board[sx][sy] < low or stamina_board[sx][sy] > high:
-        return False
+                ans_board[x][y] = [min_h,max_h,1]
+            for d in range(8):
+                nx = x + dx[d]
+                ny = y + dy[d]
 
-    visited_num += 1
-    q = deque([(sx,sy)])
-    visited[sx][sy] = visited_num
-
-    cnt = 0
-    while q:
-        x,y = q.pop()
-
-        if board[x][y] == 'K':
-            cnt += 1
-
-        if cnt == home_cnt:
-            return True
-        for d in range(8):
-            nx = x + dx[d]
-            ny = y + dy[d]
-
-            if point_validator(nx,ny):
-                if low <= stamina_board[nx][ny] <= high:
+                if point_validator(nx,ny):
+                    nh = height[nx][ny]
                     visited[nx][ny] = visited_num
-                    q.appendleft((nx,ny))
-
-    return False
+                    if board[nx][ny] == 'K':
+                        q.appendleft((nx,ny,min(min_h,nh),max(max_h,nh)))
+                    else:
+                        q.appendleft((nx,ny,min(min_h,nh),max(max_h,nh)))
 def point_validator(x,y):
     if x < 0 or y < 0 or x >= n or y >= n:
         return False
