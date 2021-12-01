@@ -1,65 +1,84 @@
 def solution(word, pages):
-    page_info = {}
+    word = word.lower()
+    web_info = make_web_info(word, pages)
+    score, answer = calc_link_score(web_info)
+    return answer
+
+
+def calc_link_score(web_info):
+
+    for url in web_info:
+        now = web_info[url]
+        for link in now['links']:
+            if link not in web_info:
+                continue
+            web_info[link]['score'] += now['count'] / len(now['links'])
+
+    link_score = 0
+    answer = 0
+    for url in web_info:
+        score = web_info[url]['score']
+        index = web_info[url]['index']
+        if link_score < score:
+            link_score = score
+            answer = index
+        elif link_score == score:
+            answer = min(answer, index)
+    return link_score, answer
+
+
+def make_web_info(word, pages):
+    web_info = {}
+    index = 0
 
     for page in pages:
-        link = get_link(page)
-        page_info[link] = {
-            'basic_score': count_keyword(page, word.lower()),
-            'links': check_link(page),
+        url = search_url(page).strip()
+        count = search_word(word,page)
+        links = search_links(page, url)
+        web_info[url] = {
+            'index': index,
+            'count': count,
+            'links': links,
+            'score': count
         }
-
-    score_order = []
-    for target in page_info.keys():
-        link_score = 0
-        for link in page_info.keys():
-            if target in page_info[link]['links']:
-                link_score += page_info[link]['basic_score'] / len(page_info[link]['links'])
-        score_order.append((len(score_order), page_info[target]['basic_score'] + link_score))
-    answer = 0
-    score_order.sort(key=lambda x: (-x[1], x[0]))
-    return score_order[0][0]
+        index += 1
+    return web_info
 
 
-def get_link(page):
-    start = page.find('<head>')
-    while True:
-        meta_start = page.find('<meta', start)
-        meta_end = page.find('>',meta_start)
-        meta = page[meta_start:meta_end]
-        if meta.find('property="og:url"') >= 0:
-            url_start = meta.index('content="') + len('content="')
-            url_end = meta.index('"', url_start)
-            return meta[url_start:url_end]
-        start = meta_end+1
+def search_url(page):
+    start = page.index('<meta property="og:url" content="') + len('<meta property="og:url" content="')
+    end = start + page[start:].index('"/>')
+    return page[start:end]
 
-def count_keyword(page, keyword):
-    word = ''
+
+def search_word(word, page):
     count = 0
-    for c in page:
-        if c.isalpha():
-            word += c
-        else:
-            if word.lower() == keyword:
-                count += 1
-            word = ''
-    return count
-
-
-def check_link(page):
-    links = []
-    start = 0
+    page = page.lower()
     while True:
-        a_start = page.find('<a href="', start)
-        if a_start == -1:
-            break
-        a_end = page.find('</a>',a_start)
+        index = page.find(word)
+        if index == -1:
+            return count
+        if 0 < index:
+            if not page[index - 1].isalpha() and not page[index+len(word)].isalpha():
+                count += 1
+        elif index == 0:
+            if not page[index + len(word)].isalpha():
+                count += 1
+        page = page[index + len(word)-1:]
 
-        link_start = a_start + len('a_start')
-        link_end = page.find('">', link_start)
-        links.append(page[link_start:link_end])
-        start = a_end+4
+
+def search_links(page, url):
+    body = page[page.index('<body>'):].lower()
+    links = []
+    try:
+        while True:
+            start = body.index('<a href="') + len('<a href="')
+            end = start + body[start:].index('">')
+            link = body[start:end].strip()
+            if link != url:
+                links.append(link)
+            body = body[end + 3:]
+    except:
+        pass
+
     return links
-
-a = "Muzi"
-b = ["<html lang=\"ko\" xml:lang=\"ko\" xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n  <meta charset=\"utf-8\">\n  <meta property=\"og:url\" content=\"https://careers.kakao.com/interview/list\"/>\n</head>  \n<body>\nMuzi<a href=\"https://careers.kakao.com/interview/list\"></a>#!MuziMuzi!)jayg07con&&\n\n</body>\n</html>", "<html lang=\"ko\" xml:lang=\"ko\" xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n  <meta charset=\"utf-8\">\n  <meta property=\"og:url\" content=\"https://www.kakaocorp.com\"/>\n</head>  \n<body>\ncon%\tmuzI92apeach&2<a href=\"https://hashcode.co.kr/tos\"></a>\n\n\t^\nMuziMuzi Muzi</body>\n</html>"]
-print(solution(a,b))
