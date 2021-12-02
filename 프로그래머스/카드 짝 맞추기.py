@@ -1,98 +1,205 @@
+# from heapq import heappush, heappop
+#
+# dx = [-1, 1, 0, 0]
+# dy = [0, 0, -1, 1]
+#
+#
+# def solution(board, r, c):
+#     global answer
+#     answer = 9876543210
+#     board, max_num = renew_board(board)
+#     visited = [[[9876543210]*(2 ** max_num) for _ in range(4)] for _ in range(4)]
+#     bfs(board, r, c, visited, max_num)
+#     return answer
+#
+#
+# def bfs(board, sx, sy, visited, max_num):
+#     global answer
+#     pq = []
+#
+#     if board[sx][sy] > 0:
+#         num = board[sx][sy]
+#         nxt_visited_bit = (1 << num)
+#         nxt = num - 1 if num % 2 == 0 else num + 1
+#         pq.append((2, sx, sy, nxt_visited_bit, nxt))
+#         visited[sx][sy][nxt_visited_bit] = 2
+#     else:
+#         visited[sx][sy][0] = 1
+#         pq.append((1,sx,sy, 0, -1))
+#     while pq:
+#         count, x, y, visited_bit, target = heappop(pq)
+#         if visited_bit == (2**max_num)-2:
+#             answer = min(answer, count-1)
+#             continue
+#         for d in range(4):
+#             nx, ny = x, y
+#             for typ in range(2):
+#                 if typ == 0:
+#                     nx += dx[d]
+#                     ny += dy[d]
+#                 else:
+#                     nx,ny = ctrl_move(nx, ny, d, board, visited_bit)
+#
+#                 if point_validator(nx, ny, visited, visited_bit, count):
+#                     visited[nx][ny][visited_bit] = count
+#                     num = board[nx][ny]
+#                     if board[nx][ny] > 0 and visited_bit & (1<<num) == 0:
+#                         nxt_visited_bit = visited_bit | (1 << num)
+#                         if target == -1:
+#                             nxt = num - 1 if num % 2 == 0 else num + 1
+#                             heappush(pq,(count + 2, nx, ny, nxt_visited_bit, nxt))
+#                         elif target == num:
+#                             heappush(pq,(count + 2, nx, ny, nxt_visited_bit, -1))
+#                         else:
+#                             heappush(pq,(count + 1, nx, ny, visited_bit, target))
+#                         break
+#                     else:
+#                         heappush(pq, (count + 1, nx, ny, visited_bit, target))
+#                 else:
+#                     break
+#
+# def ctrl_move(x,y,d,board,visited_bit):
+#     for _ in range(2):
+#         x += dx[d]
+#         y += dy[d]
+#         if boundray_validator(x, y):
+#             num = board[x][y]
+#             if board[x][y] > 0 and visited_bit & (1 << num) == 0:
+#                 break
+#         else:
+#             x -= dx[d]
+#             y -= dy[d]
+#             break
+#     return x,y
+#
+# def boundray_validator(x, y):
+#     if x < 0 or y < 0 or x >= 4 or y >= 4:
+#         return False
+#     return True
+#
+# def point_validator(x, y, visited, visited_bit, count):
+#     if not boundray_validator(x, y):
+#         return False
+#     elif visited[x][y][visited_bit] < count:
+#         return False
+#     return True
+#
+# def renew_board(board):
+#     pairs = [[] for _ in range(7)]
+#
+#     for x in range(4):
+#         for y in range(4):
+#             if board[x][y] > 0:
+#                 pairs[board[x][y]].append((x,y))
+#
+#     new_num = 1
+#     for pair in pairs:
+#         for x, y in pair:
+#             board[x][y] = new_num
+#             new_num += 1
+#     return board, new_num
 from collections import deque
-from itertools import permutations
 
-INF = 9876543210
 dx = [-1, 1, 0, 0]
 dy = [0, 0, -1, 1]
 
 
 def solution(board, r, c):
-    global n, locations, cost, answer
-    answer = INF
-    n = 4
-    cost = set_cost(board)
-
-    locations, targets = set_target(board)
-
-    for order in permutations(targets, len(targets)):
-        simul(order, 0, r, c, 0)
+    global answer
+    answer = 9876543210
+    board, max_num = renew_board(board)
+    visited = [[[[False]*(2 ** max_num) for _ in range(4)] for _ in range(4)] for _ in range(4)]
+    bfs(board, r, c, visited, max_num)
     return answer
 
 
-def simul(order, idx, x, y, count):
+def bfs(board, sx, sy, visited, max_num):
     global answer
-    if idx == len(order):
-        answer = min(answer, count)
-        return
-    now = x * 4 + y
+    q = deque()
 
-    nx1, ny1 = locations[order[idx]][0]
-    nx2, ny2 = locations[order[idx]][1]
+    if board[sx][sy] > 0:
+        num = board[sx][sy]
+        nxt_visited_bit = (1 << num)
+        nxt = num - 1 if num % 2 == 0 else num + 1
+        q.appendleft((sx, sy, 1, nxt_visited_bit, nxt))
+    q.appendleft((sx,sy, 0, 0, -1))
+    while q:
+        x, y, count, visited_bit, target = q.pop()
 
-    nxt1 = nx1 * 4 + ny1
-    nxt2 = nx2 * 4 + ny2
+        if visited_bit == (2**max_num)-2:
+            answer = min(answer, count)
+            continue
+        for d in range(4):
+            nx, ny = x, y
+            for typ in range(2):
+                if typ == 0:
+                    nx += dx[d]
+                    ny += dy[d]
+                else:
+                    nx,ny = ctrl_move(nx, ny, d, board, visited_bit)
 
-    nxt_count = count + cost[now][nxt1] + cost[nxt1][nxt2]+2
-    simul(order, idx + 1, nx2, ny2, nxt_count)
+                if point_validator(nx, ny, visited, visited_bit,d):
+                    visited[nx][ny][d][visited_bit] = True
+                    num = board[nx][ny]
+                    if board[nx][ny] > 0 and visited_bit & (1<<num) == 0:
+                        nxt_visited_bit = visited_bit | (1 << num)
+                        if target == -1:
+                            nxt = num - 1 if num % 2 == 0 else num + 1
+                            q.appendleft((nx, ny, count + 2, nxt_visited_bit, nxt))
+                        elif target == num:
+                            q.appendleft((nx, ny, count + 2, nxt_visited_bit, -1))
+                        else:
+                            q.appendleft((nx, ny, count + 1, visited_bit, target))
+                        break
+                    else:
+                        q.appendleft((nx, ny, count + 1, visited_bit, target))
+                else:
+                    break
 
-    nxt_count = count + cost[now][nxt2] + cost[nxt1][nxt2]+2
-    simul(order, idx + 1, nx1, ny1, nxt_count)
-
-
-def set_target(board):
-    locations = [[] for _ in range(7)]
-    targets = []
-    for x in range(n):
-        for y in range(n):
-            if board[x][y] != 0:
-                num = board[x][y]
-                if not locations[num]:
-                    targets.append(num)
-                locations[num].append((x, y))
-    return locations, targets
-
-
-def set_cost(board):
-    cost = [[INF]*16 for _ in range(16)]
-
-    for start in range(16):
-        q = deque([(start // 4, start % 4, 0)])
-        cost[start][start] = 0
-
-        while q:
-            x, y, c = q.pop()
-            for d in range(4):
-                nx = x+dx[d]
-                ny = y+dy[d]
-                tmp = []
-                if point_validator(nx,ny):
-                    tmp.append((nx,ny))
-                    if board[nx][ny] == 0:
-                        for _ in range(3):
-                            nx += dx[d]
-                            ny += dy[d]
-
-                            if point_validator(nx, ny):
-                                if board[nx][ny] != 0:
-                                    tmp.append((nx,ny))
-                                    break
-                            else:
-                                nx -= dx[d]
-                                ny -= dy[d]
-                                break
-                for nx,ny in tmp:
-                    dest = nx * 4 + ny
-                    if cost[start][dest] > c + 1:
-                        cost[start][dest] = c + 1
-                        q.appendleft((nx, ny, c + 1))
-    return cost
-
-def point_validator(x, y):
+def ctrl_move(x,y,d,board,visited_bit):
+    for _ in range(2):
+        x += dx[d]
+        y += dy[d]
+        if boundray_validator(x, y):
+            num = board[x][y]
+            if board[x][y] > 0 and visited_bit & (1 << num) == 0:
+                break
+        else:
+            x -= dx[d]
+            y -= dy[d]
+            break
+    return x,y
+def boundray_validator(x, y):
     if x < 0 or y < 0 or x >= 4 or y >= 4:
         return False
     return True
+
+
+def point_validator(x, y, visited, visited_bit,d):
+    if not boundray_validator(x, y):
+        return False
+    elif visited[x][y][d][visited_bit]:
+        return False
+    return True
+
+
+def renew_board(board):
+    pairs = [[] for _ in range(7)]
+
+    for x in range(4):
+        for y in range(4):
+            if board[x][y] > 0:
+                pairs[board[x][y]].append((x, y))
+
+    new_num = 1
+    for pair in pairs:
+        for x, y in pair:
+            board[x][y] = new_num
+            new_num += 1
+    return board, new_num
 
 a = [[1, 0, 0, 3], [2, 0, 0, 0], [0, 0, 0, 2], [3, 0, 1, 0]]
 b = 1
 c = 0
 print(solution(a,b,c))
+
