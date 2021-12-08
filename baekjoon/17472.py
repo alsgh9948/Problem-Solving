@@ -1,103 +1,102 @@
 from sys import stdin
 from collections import deque
-from itertools import combinations
-
-dx = [-1,1,0,0]
-dy = [0,0,-1,1]
-INF = 9876543210
 
 input = stdin.readline
+dx = [-1,1,0,0]
+dy = [0,0,-1,1]
+
 n,m = map(int, input().split())
 board = [list(map(int, input().split())) for _ in range(n)]
-edge_list = [[],[]]
-dist_board = []
-bridge = []
+edges = []
 
 def solv():
-    answer = INF
-    set_area()
-    set_dist_board()
-    set_bridge()
-    visited = [0]*len(dist_board)
-    visited_num = 1
-    for cnt in range(1,len(dist_board)-2):
-        for comb in combinations(bridge,cnt):
-            select = [[False]*len(dist_board) for _ in range(len(dist_board))]
-            total = 0
-            for x,y,length in comb:
-                select[x][y] = True
-                select[y][x] = True
-                total += length
-            visited[2] = visited_num
-            check_dfs(select,visited,visited_num,2)
-            if visited.count(visited_num) == len(dist_board)-2:
-                answer = min(answer, total)
-            visited_num += 1
-    print(answer if answer != INF else -1)
+    global parent
+    max_num = set_area_num()
 
-def set_bridge():
-    global bridge
-    for now in range(2,len(dist_board)-1):
-        for nxt in range(now+1, len(dist_board)):
-            if dist_board[now][nxt] != INF:
-                bridge.append((now,nxt,dist_board[now][nxt]))
-def check_dfs(select,visited,visited_num,now):
-    for nxt in range(2,len(select)):
-        if select[now][nxt] and visited[nxt] != visited_num:
-            visited[nxt] = visited_num
-            check_dfs(select,visited,visited_num,nxt)
+    parent = [i for i in range(max_num)]
+    candidate_bridge = set_candidate_bridge()
 
-def set_dist_board():
-    for edges in edge_list:
-        for x,y in edges:
-            num = board[x][y]
-            for d in range(4):
-                dist,dest = set_dist_dfs(x,y,d,0,num)
-                if dist > 1:
-                    dist_board[num][dest] = min(dist,dist_board[num][dest])
-def set_dist_dfs(x,y,d,cnt,num):
-    x += dx[d]
-    y += dy[d]
-    if point_validator(x,y):
-        if board[x][y] == num:
-            return -1,-1
-        elif board[x][y] == 0:
-            return set_dist_dfs(x,y,d,cnt+1,num)
+    print(kruskal(candidate_bridge,max_num))
+def kruskal(candidate_bridge, max_num):
+    bridge_count = 0
+    length = 0
+
+    for a,b,c in candidate_bridge:
+        if not is_same_parent(a,b):
+            union(a,b)
+            bridge_count += 1
+            length += c
+            if bridge_count == max_num-3:
+                return length
+    return -1
+
+def find(target):
+    global parent
+    if parent[target] == target:
+        return target
+    parent[target] = find(parent[target])
+    return parent[target]
+
+def union(a,b):
+    global parent
+    a = find(a)
+    b = find(b)
+
+    if a != b:
+        if a > b:
+            parent[a] = b
         else:
-            return cnt, board[x][y]
-    return -1,-1
+            parent[b] = a
 
-def set_area():
-    global board,dist_board
+def is_same_parent(a,b):
+    return find(a) == find(b)
+
+def set_candidate_bridge():
+    candidate_bridge = set()
+    for x,y,d in edges:
+        start = board[x][y]
+        length = 0
+        while True:
+            x += dx[d]
+            y += dy[d]
+            if boundaray_validator(x,y):
+                end = board[x][y]
+                if end != 0:
+                    if start != end and length >= 2:
+                        candidate_bridge.add((start,end,length))
+                    break
+                length += 1
+            else:
+                break
+
+    candidate_bridge = sorted(candidate_bridge, key=lambda x:x[2])
+    return candidate_bridge
+def set_area_num():
     num = 2
     for x in range(n):
         for y in range(m):
             if board[x][y] == 1:
-                set_area_bfs(x,y,num)
+                bfs(x,y,num)
                 num += 1
-    dist_board = [[INF]*num for _ in range(num)]
-def set_area_bfs(sx,sy,num):
-    global board,edge_list
+    return num
+def bfs(sx,sy,num):
+    global board,edges
     q = deque([(sx,sy)])
     board[sx][sy] = num
-    edge = []
+
     while q:
         x,y = q.pop()
-        edge_flag = False
+
         for d in range(4):
             nx = x + dx[d]
             ny = y + dy[d]
-
-            if point_validator(nx,ny):
-                if board[nx][ny] == 0:
-                    edge_flag = True
-                elif board[nx][ny] != num:
+            if boundaray_validator(nx,ny):
+                if board[nx][ny] == 1:
                     board[nx][ny] = num
                     q.appendleft((nx,ny))
-        if edge_flag:
-            edge.append((x,y))
-    edge_list.append(edge)
-def point_validator(x,y):
+                elif board[nx][ny] == 0:
+                    edges.append((x,y,d))
+def boundaray_validator(x,y):
     if x < 0 or y < 0 or x >= n or y >= m:
         return False
     return True

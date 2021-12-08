@@ -1,42 +1,30 @@
+from sys import stdin
+from itertools import combinations
+
+input = stdin.readline
+
 n = int(input())
+board = [list(map(int, input().split())) for _ in range(n)]
 
-_map = [list(map(int,input().strip().split())) for _ in range(n)]
+def solv():
+    answer = 9876543210
 
-select = [False]*n
+    for start_team in combinations(range(1,n),n//2-1):
+        start_team = list(start_team)+[0]
+        link_team = [i for i in range(n) if i not in start_team]
 
-select[0] = True
-ans = 1000000000
-def select_member(cnt, idx, select):
-    if cnt == n/2:
-        simul(select)
-        return
-    for i in range(idx,n):
-        select[i] = True
-        select_member(cnt+1,i+1,select)
-        select[i] = False
+        start_status = calc_status(start_team)
+        link_status = calc_status(link_team)
 
-def simul(select):
-    start = []
-    link = []
-    for i in range(n):
-        if select[i]:
-            start.append(i)
-        else:
-            link.append(i)
+        answer = min(answer,(abs(start_status-link_status)))
+    print(answer)
 
-    start_power = calc_power(start)
-    link_power = calc_power(link)
-    global ans
-    ans = min(ans, abs(start_power-link_power))
-
-def calc_power(member):
-    sum_power = 0
-    for i in range(len(member)-1):
-        for j in range(i+1,len(member)):
-            x = member[i]
-            y = member[j]
-            sum_power += (_map[x][y] + _map[y][x])
-    return sum_power
-
-select_member(1,1,select)
-print(ans)
+def calc_status(team):
+    status = 0
+    for i in range(n//2):
+        a = team[i]
+        for j in range(i+1,n//2):
+            b = team[j]
+            status += board[a][b] + board[b][a]
+    return status
+solv()
