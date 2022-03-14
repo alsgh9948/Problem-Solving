@@ -1,35 +1,32 @@
 n = int(input())
-
+target = []
 board = []
-targets = [[] for _ in range(20)]
-rd = [False]*20
 for x in range(n):
     board.append(list(map(int, input().split())))
     for y in range(n):
-        ld_num = x+y
         if board[x][y] == 1:
-            targets[ld_num].append((x,y))
+            target.append((x,y))
 
-answer = [0,0]
+r = [False]*(n*2-1)
+l = [False]*(n*2-1)
 
-def solv():
-    insert_bishop(0,0)
-    insert_bishop(1,0)
-
-    print(answer[0]+answer[1])
-def insert_bishop(idx,cnt):
-    global answer,ld,rd
-
-    if idx >= 2*n-1:
-        answer[idx%2] = max(answer[idx%2], cnt)
+answer = 0
+def solv(now,count):
+    global answer
+    if now == len(target):
+        answer = max(answer, count)
         return
 
-    for x,y in targets[idx]:
-        if board[x][y] == 1:
-            rd_num = (n-1-x)+y
-            if not rd[rd_num]:
-                rd[rd_num] = True
-                insert_bishop(idx+2,cnt+1)
-                rd[rd_num] = False
-    insert_bishop(idx+2,cnt)
-solv()
+    x,y = target[now]
+
+    rnum = x+y
+    lnum = n-y-1+x
+    if not r[rnum] and not l[lnum]:
+        r[rnum] = l[lnum] = True
+        solv(now+1,count+1)
+        r[rnum] = l[lnum] = False
+
+    solv(now+1,count)
+
+solv(0,0)
+print(answer)

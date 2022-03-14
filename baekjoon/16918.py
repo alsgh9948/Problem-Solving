@@ -1,58 +1,62 @@
 from sys import stdin
 from collections import deque
 
+input = stdin.readline
 dx = [-1,1,0,0]
 dy = [0,0,-1,1]
 
-r,c,n = map(int, stdin.readline().strip().split())
-board = []
-
-for i in range(r):
-    board.append(list(stdin.readline().strip()))
-    for j in range(c):
-        if board[i][j] == 'O':
-            board[i][j] = 1
-        else:
-            board[i][j] = 0
+r,c,n = map(int, input().split())
+board = [list(map(lambda x : -1 if x == '.' else 0,input().strip())) for _ in range(r)]
 
 def solv():
-    q = deque()
-    for i in range(1,n):
-        op = i%2
-        if op == 1:
-            for x in range(r):
-                for y in range(c):
-                    if board[x][y] == 0:
-                        board[x][y] = 1
-                    else:
-                        q.appendleft((x,y))
-        else:
-            bumb(q)
+    global board
 
-    for row in board:
-        for num in row:
-            if num == 0:
+    insert_timing = False
+    for _ in range(n):
+        insert_target = []
+        remove_target = []
+        for x in range(r):
+            for y in range(c):
+                if insert_timing and board[x][y] == -1:
+                    insert_target.append((x,y))
+                elif board[x][y] != -1:
+                    board[x][y] += 1
+                    if board[x][y] == 3:
+                        remove_target.append((x,y))
+
+        if remove_target:
+            remove(remove_target)
+
+        if insert_target:
+            insert(insert_target)
+        insert_timing = not insert_target
+
+    print_answer()
+
+def print_answer():
+    for x in range(r):
+        for y in range(c):
+            if board[x][y] == -1:
                 print('.',end='')
             else:
                 print('O',end='')
         print()
+def remove(remove_target):
+    global board
 
-def bumb(q):
-    while q:
-        x,y = q.pop()
-        board[x][y] = 0
-
+    for x,y in remove_target:
+        board[x][y] = -1
         for d in range(4):
             nx = x + dx[d]
             ny = y + dy[d]
-
-            if not point_validator(nx,ny):
+            if nx < 0 or ny < 0 or nx >= r or ny >= c:
                 continue
-            board[nx][ny] = 0
 
-def point_validator(x,y):
-    if x < 0 or y < 0 or x >= r or y >= c:
-        return False
-    return True
+            board[nx][ny] = -1
 
+def insert(insert_target):
+    global board
+
+    for x,y in insert_target:
+        board[x][y] = 0
 solv()

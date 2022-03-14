@@ -1,36 +1,42 @@
+from sys import stdin
 from itertools import combinations
 
-h,w = map(int, input().strip().split())
-n = int(input().strip())
+input = stdin.readline
 
-s = []
-board = [[False]*w for _ in range(h)]
+h,w = map(int, input().split())
+n = int(input())
+
+points = []
 for _ in range(n):
-    r,c = map(int, input().strip().split())
-    s.append((r,c))
+    points.append(list(map(int, input().split())))
 
 def solv():
-    ans = 0
-    for comb in combinations(s,2):
-        a,b = comb
+    answer = 0
+    for a,b in combinations(points, 2):
+        x1,y1 = a
+        x2,y2 = b
 
-        if a[0]+b[0] <= h and max(a[1],b[1]) <= w:
-            ans = max(ans, a[0] * a[1] + b[0] * b[1])
-        elif a[0]+b[1] <= h and max(a[1],b[0]) <= w:
-            ans = max(ans, a[0] * a[1] + b[0] * b[1])
-        elif a[1] + b[0] <= h and max(a[0],b[1]) <= w:
-            ans = max(ans, a[0] * a[1] + b[0] * b[1])
-        elif a[1]+b[1] <= h and max(a[0],b[0]) <= w:
-            ans = max(ans, a[0] * a[1] + b[0] * b[1])
-        elif a[0]+b[0] <= w and max(a[1],b[1]) <= h:
-            ans = max(ans, a[0] * a[1] + b[0] * b[1])
-        elif a[0]+b[1] <= w and max(a[1],b[0]) <= h:
-            ans = max(ans, a[0] * a[1] + b[0] * b[1])
-        elif a[1] + b[0] <= w and max(a[0],b[1]) <= h:
-            ans = max(ans, a[0] * a[1] + b[0] * b[1])
-        elif a[1]+b[1] <= w and max(a[0],b[0]) <= h:
-            ans = max(ans, a[0] * a[1] + b[0] * b[1])
+        if point_validator(x1,y1,x2,y2):
+            answer = max(answer,x1*y1+x2*y2)
+    print(answer)
 
-    return ans
+def point_validator(x1,y1,x2,y2):
+    if y1+y2 <= w and max(x1,x2) <= h:
+        return True
+    elif y1+y2 <= h and max(x1,x2) <= w:
+        return True
+    elif y1+x2 <= w and max(x1,y2) <= h:
+        return True
+    elif y1+x2 <= h and max(x1,y2) <= w:
+        return True
+    elif x1+y2 <= w and max(y1,x2) <= h:
+        return True
+    elif x1+y2 <= h and max(y1,x2) <= w:
+        return True
+    elif x1+x2 <= w and max(y1,y2) <= h:
+        return True
+    elif x1+x2 <= h and max(y1,y2) <= w:
+        return True
+    return False
 
-print(solv())
+solv()

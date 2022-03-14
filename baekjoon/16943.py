@@ -1,18 +1,40 @@
-from itertools import permutations
+from sys import stdin
 
-a,b = input().strip().split()
+input = stdin.readline
 
-a = list(map(int,a))
-a.sort()
+n = int(input())
+input_data = input()
+nums = []
+ops = []
+for c in input_data[1:]:
+    if c.isdigit():
+        nums.append(int(c))
+    else:
+        ops.append(c)
 
-b = int(b)
-ans = -1
-for perm in permutations(a,len(a)):
-    num = 0
-    for n in perm:
-        num = num*10 + n
-        if num > b or num == 0:
-            num = -1
-            break
-    ans = max(ans, num)
-print(ans)
+start = int(input_data[0])
+answer = -(2^31)-1
+def solv():
+    insert_bracket(0,start)
+    print(answer)
+def insert_bracket(now,result):
+    global answer
+    if now == len(nums):
+        answer = max(answer, result)
+        return
+
+    insert_bracket(now+1,calc(result,nums[now],ops[now]))
+
+    if now < len(nums)-1:
+        insert_bracket(now+2,calc(result,calc(nums[now],nums[now+1],ops[now+1]),ops[now]))
+
+
+def calc(a,b,op):
+    if op == '+':
+        return a+b
+    elif op == '-':
+        return a-b
+    elif op == '*':
+        return a*b
+
+solv()

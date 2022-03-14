@@ -1,78 +1,57 @@
 from sys import stdin
-from collections import deque
+from heapq import heappush, heappop
 
-dx = [-1,1,0,0]
-dy = [0,0,-1,1]
+input = stdin.readline
+dx = [-1,0,1,0]
+dy = [0,1,0,-1]
 
-w,h = map(int, stdin.readline().strip().split())
-sx,sy,ex,ey = -1,-1,-1,-1
+m,n = map(int, input().split())
+
 board = []
-for i in range(h):
-    board.append(list(stdin.readline().strip()))
-    for j in range(w):
-        if board[i][j] == 'C':
-            if sx == -1:
-                sx,sy = i,j
-                board[i][j] = '*'
-            else:
-                ex,ey = i,j
-def bfs():
-    visited = [[[10000000]*4 for _ in range(w)] for _ in range(h)]
-    q = deque()
+sx,sy = -1,-1
+for x in range(n):
+    board.append(list(input().strip()))
+    for y in range(m):
+        if sx == -1 and board[x][y] == 'C':
+            sx,sy = x,y
+            board[x][y] = '.'
+
+def solv():
+    pq = []
+    visited = [[987654321]*m for _ in range(n)]
+
     for d in range(4):
         nx = sx + dx[d]
         ny = sy + dy[d]
 
-        if not point_validator(nx, ny):
-            continue
-        q.appendleft((0,nx,ny,d))
-        visited[nx][ny][d] = 1
-    min_cnt = 10000000
-    while q:
-        # cnt, x, y, dir = heapq.heappop(pq)
-        cnt, x, y, dir = q.pop()
+        if point_validator(nx, ny, visited,0):
+            heappush(pq,(0,nx,ny,d))
+            visited[nx][ny] = 0
 
-        if x == ex and y == ey:
-            # print(cnt)
-            min_cnt = min(cnt,min_cnt)
-            visited[x][y][dir] = 10000000
-            continue
+    while pq:
+        cnt,x,y,d = heappop(pq)
 
-        for d in range(4):
-            if not dir_validator(dir,d):
-                continue
-            nx = x + dx[d]
-            ny = y + dy[d]
+        if board[x][y] == 'C':
+            print(cnt)
+            return
 
-            if not point_validator(nx,ny):
-                continue
+        for op in [0,1,-1]:
+            nd = (d+op)%4
 
-            if dir == d:
-                if visited[nx][ny][d] > cnt:
-                    q.appendleft((cnt,nx,ny,d))
-                    visited[nx][ny][d] = cnt
-            else:
-                if visited[nx][ny][d] > cnt+1:
-                    q.appendleft((cnt+1,nx,ny,d))
-                    visited[nx][ny][d] = cnt+1
+            nx = x + dx[nd]
+            ny = y + dy[nd]
 
-    return min_cnt
-def point_validator(x,y):
-    if x < 0 or y < 0 or x >= h or y >= w:
+            if point_validator(nx,ny,visited,cnt+abs(op)):
+                visited[nx][ny] = cnt+abs(op)
+                heappush(pq,(cnt+abs(op),nx,ny,nd))
+
+def point_validator(x,y,visited,cnt):
+    if x < 0 or y < 0 or x >= n or y >= m:
         return False
     elif board[x][y] == '*':
         return False
-    return True
-
-def dir_validator(now, nxt):
-    if now == 0 and nxt == 1:
-        return False
-    elif now == 1 and nxt == 0:
-        return False
-    elif now == 2 and nxt == 3:
-        return False
-    elif now == 3 and nxt == 2:
+    elif visited[x][y] < cnt:
         return False
     return True
 
-print(bfs())
+solv()

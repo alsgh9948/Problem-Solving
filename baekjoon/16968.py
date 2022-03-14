@@ -1,43 +1,27 @@
-from itertools import product
-num = [i for i in range(10)]
-alpha = [i for i in range(26)]
+fomatter = input()
 
-str = input().strip()
+candidate = set()
 
-def calc_cnt(typ,cnt):
-    if cnt <= 2:
-        if typ == 'd':
-            start = 10
-        else:
-            start = 26
-        if cnt == 0:
-            return 0
-        rst = 1
-        for i in range(start, start - cnt, -1):
-            rst *= i
-        return rst
+def solv():
+    make_car_num(0,'')
+    print(len(candidate))
+
+def make_car_num(now, num):
+    global candidate
+
+    if now == len(fomatter):
+        candidate.add(num)
+        return
+
+    if fomatter[now] == 'd':
+        for target in range(10):
+            if len(num) == 0 or num[-1] != str(target):
+                make_car_num(now+1,num+str(target))
+
     else:
-        rst = 0
-        target = num if typ == 'd' else alpha
-        for perm in product(target,repeat=cnt):
-            flag = True
-            for idx in range(cnt-1):
-                if perm[idx] == perm[idx+1]:
-                    flag = False
-                    break
-            if flag:
-                rst += 1
-        return rst
+        for target in range(26):
+            nxt = chr(ord('a')+target)
+            if len(num) == 0 or num[-1] != nxt:
+                make_car_num(now+1,num+nxt)
 
-ans = 1
-c = str[0]
-cnt = 1
-for i in range(1,len(str)):
-    if c != str[i]:
-        ans *= calc_cnt(c,cnt)
-        cnt = 1
-        c = str[i]
-    else:
-        cnt += 1
-ans *= calc_cnt(c,cnt)
-print(ans)
+solv()

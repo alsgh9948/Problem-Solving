@@ -1,55 +1,50 @@
-import sys
+from sys import stdin
 from collections import deque
 
-dx = [1,-1,0,0]
-dy = [0,0,1,-1]
-n = int(sys.stdin.readline())
+input = stdin.readline
+dx = [-1,1,0,0]
+dy = [0,0,-1,1]
 
-_map = [list(map(int,list(sys.stdin.readline().strip()))) for _ in range(n)]
+n = int(input())
+board = [list(map(int, list(input().strip()))) for _ in range(n)]
 
-cnt_list = []
-def bfs(x,y,num):
-    global _map
-    q = deque()
-    q.append((x,y))
-    group_cnt = 0
+def solv():
+    num = 1
+    answer = []
+    for sx in range(n):
+        for sy in range(n):
+            if board[sx][sy] == 1:
+                num += 1
+                answer.append(bfs(sx,sy,num))
+
+    answer.sort()
+    print(len(answer))
+    for cnt in answer:
+        print(cnt)
+def bfs(sx,sy,num):
+    global board
+    q = deque([(sx,sy)])
+    board[sx][sy] = num
+    count = 1
 
     while q:
         x,y = q.pop()
-        _map[x][y] = num
-        group_cnt += 1
 
-        for i in range(4):
-            nx = x + dx[i]
-            ny = y + dy[i]
-            if (nx < 0 or ny < 0 or nx >= n or ny >=n) or _map[nx][ny] != 1:
-                continue
-            _map[nx][ny] = num
-            q.appendleft((nx,ny))
-    cnt_list.append(group_cnt)
+        for d in range(4):
+            nx = x + dx[d]
+            ny = y + dy[d]
 
-def dfs(x,y,num):
-    global _map
-    tmp_cnt = 1
-    _map[x][y] = num
-    for i in range(4):
-        nx = x + dx[i]
-        ny = y + dy[i]
-        if (nx < 0 or ny < 0 or nx >= n or ny >= n) or _map[nx][ny] != 1:
-            continue
-        tmp_cnt += dfs(nx,ny,num)
-    return tmp_cnt
+            if point_validator(nx, ny):
+                board[nx][ny] = num
+                count += 1
+                q.appendleft((nx,ny))
+    return count
 
-num = -1
-for i in range(n):
-    for j in range(n):
-        if _map[i][j] == 1:
-            # bfs(i,j,num)
+def point_validator(x,y):
+    if x < 0 or y < 0 or x >= n or y >= n:
+        return False
+    elif board[x][y] != 1:
+        return False
+    return True
 
-            cnt_list.append(dfs(i,j,num))
-            num -= 1
-
-cnt_list.sort()
-print(len(cnt_list))
-for ans_cnt in cnt_list:
-    print(ans_cnt)
+solv()

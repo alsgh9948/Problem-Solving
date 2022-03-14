@@ -1,50 +1,56 @@
 board = []
-candidate = []
-for i in range(10):
-    board.append(list(input().strip().split()))
-    for j in range(10):
-        if board[i][j] == '1':
-            candidate.append((i,j))
-paper = [0,5,5,5,5,5]
-
+targets = []
+remain_paper = [0,5,5,5,5,5]
+answer = 9876543210
 visited = [[False]*10 for _ in range(10)]
-ans = 987654321
-def select_paper(idx, cnt):
-    global ans,paper
-    if cnt >= ans:
+for x in range(10):
+    board.append(list(map(int, input().split())))
+    for y in range(10):
+        if board[x][y] == 1:
+            targets.append((x,y))
+
+def solv():
+    select_paper(0,0)
+    print(-1 if answer == 9876543210 else answer)
+
+def select_paper(idx,count):
+    global remain_paper, answer
+    if count >= answer:
         return
-    if idx == len(candidate):
-        ans = min(ans,cnt)
+
+    if idx == len(targets):
+        answer = min(answer, count)
         return
 
-    x = candidate[idx][0]
-    y = candidate[idx][1]
+    x,y = targets[idx]
+    if visited[x][y]:
+        select_paper(idx+1,count)
+    else:
+        for size in range(5,0,-1):
+            if remain_paper[size] > 0 and is_possible(x,y,size):
+                remain_paper[size] -= 1
+                toggle_visited_status(x,y,size)
 
+                select_paper(idx+1, count+1)
 
-    if visited[x][y] != 0:
-        select_paper(idx+1,cnt)
-        return
-    for size in range(5,0,-1):
+                remain_paper[size] += 1
+                toggle_visited_status(x,y,size)
 
-        if paper[size] == 0 or x + size > 10 or y + size > 10:
-            continue
-        if insert_paper(x,y,size,True):
-            paper[size] -= 1
-            select_paper(idx+1,cnt+1)
-            insert_paper(x, y, size, False)
-            paper[size] += 1
-def insert_paper(x,y,size,value):
+def toggle_visited_status(sx,sy,size):
     global visited
-    for i in range(x,x+size):
-        for j in range(y,y+size):
-            if board[i][j] == '0' or (value and visited[i][j]):
-                for ii in range(i,x-1,-1):
-                    for jj in range(j-1,y-1,-1):
-                        visited[ii][jj] = False
-                    j = y+size
+    mx,my = sx+size,sy+size
+    for x in range(sx,mx):
+        for y in range(sy,my):
+            visited[x][y] = not visited[x][y]
+def is_possible(sx,sy,size):
+    mx,my = sx+size,sy+size
+    if mx > 10 or my > 10:
+        return False
+
+    for x in range(sx,mx):
+        for y in range(sy,my):
+            if board[x][y] == 0 or visited[x][y]:
                 return False
-            visited[i][j] = value
     return True
 
-select_paper(0,0)
-print(-1 if ans == 987654321 else ans)
+solv()

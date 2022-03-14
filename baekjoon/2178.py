@@ -1,38 +1,41 @@
 from sys import stdin
 from collections import deque
 
-dx = [1,-1,0,0]
-dy = [0,0,1,-1]
+input = stdin.readline
+dx = [-1,1,0,0]
+dy = [0,0,-1,1]
 
-n,m = map(int, stdin.readline().strip().split())
-_map = [list(map(int,stdin.readline().strip())) for _ in range(n)]
+n,m = map(int, input().split())
+board = [input().strip() for _ in range(n)]
 
-def point_check(x,y):
-    if (x < 0 or y < 0 or x >= n or y >= m) or _map[x][y] == 0:
-        return False
-    return True
+def solv():
+    visited = [[False]*m for _ in range(n)]
 
-def bfs():
-    visited = [[0] * m for _ in range(n)]
-    visited[0][0] = 1
-
-    q = deque()
-
-    q.appendleft((0,0))
+    q = deque([(0,0,1)])
+    visited[0][0] = True
 
     while q:
-        x,y = q.pop()
+        x,y,cnt = q.pop()
+
+        if x == n-1 and y == m-1:
+            print(cnt)
+            return
+
         for d in range(4):
             nx = x + dx[d]
             ny = y + dy[d]
-            if not point_check(nx,ny):
-                continue
-            if visited[nx][ny] != 0:
-                if visited[nx][ny] > visited[x][y] + 1:
-                    visited[nx][ny] = visited[x][y] + 1
-            else:
-                visited[nx][ny] = visited[x][y] + 1
-                q.appendleft((nx,ny))
-    print(visited[n-1][m-1])
 
-bfs()
+            if point_validator(nx,ny,visited):
+                visited[nx][ny] = True
+                q.appendleft((nx,ny,cnt+1))
+
+def point_validator(x,y,visited):
+    if x < 0 or y < 0 or x >= n or y >= m:
+        return False
+    elif visited[x][y]:
+        return False
+    elif board[x][y] == '0':
+        return False
+    return True
+
+solv()

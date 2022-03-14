@@ -1,69 +1,81 @@
-from collections import deque
+from sys import stdin
 from itertools import combinations
+from collections import deque
 
+input = stdin.readline
 dx = [0,-1,0]
 dy = [-1,0,1]
-n,m,d = map(int, input().strip().split())
 
-origin_board = [list(input().strip().split()) for _ in range(n)]
+n,m,d = map(int, input().split())
+
 board = []
-ans = 0
+enemy_count = 0
+for x in range(n):
+    board.append(list(map(int, input().split())))
+    enemy_count += board[x].count(1)
+
+dead_map = [[0]*m for _ in range(n)]
+dead_num = 0
+
+visited = [[0]*m for _ in range(n)]
+visited_num = 0
+
 def solv():
-    for archer in combinations([i for i in range(m)],3):
-        copy_body()
-        simul(archer)
+    global dead_num
+    answer = 0
+    for archer in combinations(range(m),3):
+        dead_count = 0
+        dead_num += 1
+        for h in range(n,0,-1):
+            dead_count += attack(archer,h)
 
-def simul(archer):
-    kill_cnt = 0
-    for i in range(n-1,-1,-1):
-        x = i+1
-        kill_enemy = attach_enemy(archer,x)
 
-        for x,y in kill_enemy:
-            board[x][y] = '0'
-            kill_cnt += 1
-    global ans
-    ans = max(ans, kill_cnt)
+        answer = max(answer, dead_count)
 
-def attach_enemy(archer,sx):
-    kill = set()
-    for sy in archer:
-        q = deque()
-        q.appendleft((sx,sy,0))
-        flag = False
-        while q:
-            x,y,length = q.pop()
+    print(answer)
 
-            if length == d:
-                continue
-            for dir in range(3):
-                nx = x + dx[dir]
-                ny = y + dy[dir]
+def attack(archer, x):
+    global dead_map
 
-                if not point_validator(nx,ny,sx):
-                    continue
+    target = set()
+    for y in archer:
+        tx,ty = search_enemy(x,y)
+        if tx != -1:
+            target.add((tx,ty))
 
-                if board[nx][ny] == '1':
-                    kill.add((nx,ny))
-                    flag = True
-                    break
-                q.appendleft((nx,ny,length+1))
-            if flag:
-                break
+    for x,y in target:
+        dead_map[x][y] = dead_num
+    return len(target)
+def search_enemy(sx,sy):
+    global visited, visited_num
+    visited_num += 1
 
-    return kill
+    q = deque([(sx,sy,0)])
+
+    while q:
+        x,y,cnt = q.pop()
+
+        if cnt == d:
+            continue
+
+        for dir in range(3):
+            nx = x + dx[dir]
+            ny = y + dy[dir]
+
+            if point_validator(nx,ny,sx):
+                if board[nx][ny] == 1 and dead_map[nx][ny] != dead_num:
+                   return nx,ny
+
+                visited[nx][ny] = visited_num
+                q.appendleft((nx,ny,cnt+1))
+    return -1,-1
 def point_validator(x,y,sx):
-    if x < 0 or x >= sx or y < 0 or y >= m:
+    if x == sx:
+        return False
+    elif x < 0 or y < 0 or y >= m:
+        return False
+    elif visited[x][y] == visited_num:
         return False
     return True
 
-def copy_body():
-    global board
-    board = []
-    for i in range(n):
-        row = []
-        for j in range(m):
-            row.append(origin_board[i][j])
-        board.append(row)
 solv()
-print(ans)

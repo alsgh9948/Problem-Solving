@@ -4,34 +4,29 @@ from collections import deque
 input = stdin.readline
 
 n = int(input())
-m = int(input())
-
-board = [[] for _ in range(n+1)]
-
-for _ in range(m):
-    x,y = map(int, input().split())
-    board[x].append(y)
-    board[y].append(x)
+adj_list = [[] for _ in range(n+1)]
+for _ in range(n-1):
+    a,b = map(int, input().split())
+    adj_list[a].append(b)
+    adj_list[b].append(a)
 
 def solv():
-    global board
-
+    parents = [0]*(n+1)
     q = deque([1])
-    answer = 0
 
     visited = [False]*(n+1)
-
     visited[1] = True
 
     while q:
         now = q.pop()
 
-        for nxt in board[now]:
+        for nxt in adj_list[now]:
             if not visited[nxt]:
-                answer += 1
                 visited[nxt] = True
+                parents[nxt] = now
                 q.appendleft(nxt)
 
-    print(answer)
+    for p in parents[2:]:
+        print(p)
 
 solv()
