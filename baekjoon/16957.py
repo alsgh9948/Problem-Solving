@@ -1,54 +1,49 @@
 from sys import stdin
-from collections import deque
 
+input = stdin.readline
 dx = [-1,1,0,0,-1,1,-1,1]
-dy = [0,0,-1,1,-1,1,1,-1]
+dy = [0,0,-1,1,-1,-1,1,1]
 
-r,c = map(int, stdin.readline().split())
+r,c = map(int, input().split())
+board = [list(map(int, input().split())) for _ in range(r)]
 
-board = [list(map(int, stdin.readline().split())) for _ in range(r)]
-dest = [-1]*(r*c)
-ans = [[0]*c for _ in range(r)]
-
+dest_board = [[() for _ in range(c)] for _ in range(r)]
+answer_board = [[0]*c for _ in range(r)]
 def solv():
-    for i in range(r):
-        for j in range(c):
-            num = spread_ball(i,j)
-            x = num//c
-            y = num%c
-            ans[x][y] += 1
-
-    for row in ans:
+    for sx in range(r):
+        for sy in range(c):
+            if not dest_board[sx][sy]:
+                move_ball(sx,sy)
+    for row in answer_board:
         print(*row)
-def spread_ball(x,y):
-    global dest
-    min_num = board[x][y]
-    min_dir = None
+def move_ball(x,y):
+    global dest_board, answer_board
+    target = board[x][y]
+    tx,ty = -1,-1
     for d in range(8):
         nx = x + dx[d]
         ny = y + dy[d]
 
-        if not point_validator(nx,ny,board[x][y]):
-            continue
-
-        if min_num > board[nx][ny]:
-            min_num = board[nx][ny]
-            min_dir = (nx,ny)
-
-    if min_dir:
-        if dest[min_dir[0]*c+min_dir[1]] == -1:
-            dest[x*c+y] = spread_ball(min_dir[0], min_dir[1])
-        else:
-            dest[x*c+y] = dest[min_dir[0]*c+min_dir[1]]
-        return dest[x*c+y]
+        if point_validator(nx,ny,target):
+            target = board[nx][ny]
+            tx,ty = nx,ny
+    if tx == -1:
+        nx,ny = x,y
     else:
-        dest[x*c+y] = x*c+y
-        return x * c + y
+        if dest_board[tx][ty]:
+            nx,ny = dest_board[tx][ty]
+        else:
+            nx,ny = move_ball(tx,ty)
+
+    dest_board[x][y] = (nx,ny)
+    answer_board[nx][ny] += 1
+    return dest_board[x][y]
+
 def point_validator(x,y,num):
     if x < 0 or y < 0 or x >= r or y >= c:
         return False
     elif board[x][y] > num:
         return False
-    return True
 
+    return True
 solv()
