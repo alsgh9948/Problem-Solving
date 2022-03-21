@@ -5,28 +5,34 @@ input = stdin.readline
 dx = [-1,1,0,0]
 dy = [0,0,-1,1]
 MAX = 2001
-
+START = 1000
 n = int(input())
 
-points = [list(map(lambda x:int(x)*2+1000, input().split())) for _ in range(n)]
-
 board = [[0]*MAX for _ in range(MAX)]
+group_num = 1
+
 def solv():
-    set_border()
-    visited = [[False]*MAX for _ in range(MAX)]
+    input_data()
 
-    answer = 0
-    for x1,y1,x2,y2 in points:
-        if not visited[x1][y1]:
-            bfs(x1,y1,visited)
-            answer += 1
-    answer += -1 if board[1000][1000] != 0 else 0
-    print(answer)
-def bfs(sx,sy,visited):
-    global board
+    set_group()
 
+    if board[START][START] != 0:
+        print(group_num-2)
+    else:
+        print(group_num-1)
+
+def set_group():
+    for x in range(MAX):
+        for y in range(MAX):
+            if board[x][y] == 1:
+                bfs(x,y)
+def bfs(sx,sy):
+    global group_num, board
+    group_num += 1
     q = deque([(sx,sy)])
-    visited[sx][sy] = True
+
+    board[sx][sy] = group_num
+
     while q:
         x,y = q.pop()
 
@@ -34,28 +40,30 @@ def bfs(sx,sy,visited):
             nx = x + dx[d]
             ny = y + dy[d]
 
-            if point_validator(nx, ny, visited):
-                visited[nx][ny] = True
+            if point_validator(nx,ny):
+                board[nx][ny] = group_num
                 q.appendleft((nx,ny))
 
-def point_validator(x,y,visited):
+def point_validator(x,y):
     if x < 0 or y < 0 or x >= MAX or y >= MAX:
         return False
-    elif board[x][y] == 0:
-        return False
-    elif visited[x][y]:
+    elif board[x][y] != 1:
         return False
     return True
 
-def set_border():
-    global board
+def input_data():
+    for _ in range(n):
+        x1,y1,x2,y2 = map(lambda x:int(x)*2+1000, input().split())
+        set_border(x1,y1,x2,y2)
 
-    idx = 1
-    for x1,y1,x2,y2 in points:
-        for y in range(y1,y2+1):
-            board[x1][y] = board[x2][y] = idx
-        for x in range(x1,x2+1):
-            board[x][y1] = board[x][y2] = idx
-        idx += 1
+def set_border(x1,y1,x2,y2):
+    global board
+    for x in range(x1,x2+1):
+        board[x][y1] = 1
+        board[x][y2] = 1
+
+    for y in range(y1,y2+1):
+        board[x1][y] = 1
+        board[x2][y] = 1
 
 solv()

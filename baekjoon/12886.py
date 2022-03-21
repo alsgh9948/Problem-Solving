@@ -1,49 +1,54 @@
 from collections import deque
 
-a,b,c = map(int, input().strip().split())
-d = a+b+c
-def bfs():
-    visited = [[False]*(1501) for _ in range(1501)]
-    q = deque()
+a,b,c = map(int, input().split())
 
-    q.appendleft((a,b))
+def solv():
+    total = a+b+c
+    visited = [[False]*2001 for _ in range(2001)]
+    q = deque([(a,b)])
     visited[a][b] = True
 
     while q:
         x,y = q.pop()
-        z = d-(x+y)
+        z = total-x-y
         if x == y == z:
-            return 1
+            print(1)
+            return
 
         if x != y:
-            if x > y:
-                if not visited[x-y][y+y]:
-                    q.appendleft((x-y,y+y))
-                    visited[x-y][y+y] = True
+            if x < y:
+                nx,ny = x+x,y-x
+                if not visited[nx][ny]:
+                    q.appendleft((nx, ny))
+                    visited[nx][ny] = True
             else:
-                if not visited[x+x][y-x]:
-                    q.appendleft((x+x,y-x))
-                    visited[x+x][y-x] = True
+                nx,ny = y+y,x-y
+                if not visited[nx][ny]:
+                    q.appendleft((nx, ny))
+                    visited[nx][ny] = True
         if x != z:
-            if x > z:
-                if not visited[x-z][y]:
-                    q.appendleft((x-z,y))
-                    visited[x-z][y] = True
+            if x < z:
+                nx,ny = x+x,y
+                if not visited[nx][ny]:
+                    q.appendleft((nx, ny))
+                    visited[nx][ny] = True
             else:
-                if not visited[x+x][y]:
-                    q.appendleft((x+x,y))
-                    visited[x+x][y] = True
-
+                nx,ny = x-z,y
+                if not visited[nx][ny]:
+                    q.appendleft((nx, ny))
+                    visited[nx][ny] = True
         if y != z:
-            if y > z:
-                if not visited[x][y-z]:
-                    q.appendleft((x,y-z))
-                    visited[x][y-z] = True
+            if y < z:
+                nx,ny = x,y+y
+                if not visited[nx][ny]:
+                    q.appendleft((nx, ny))
+                    visited[nx][ny] = True
             else:
-                if not visited[x][y+y]:
-                    q.appendleft((x,y+y))
-                    visited[x][y+y] = True
+                nx,ny = x,y-z
+                if not visited[nx][ny]:
+                    q.appendleft((nx, ny))
+                    visited[nx][ny] = True
 
-    return 0
+    print(0)
 
-print(bfs())
+solv()
