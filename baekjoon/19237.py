@@ -1,103 +1,103 @@
 from sys import stdin
+from collections import deque
 
+input = stdin.readline
 dx = [-1,1,0,0]
 dy = [0,0,-1,1]
 
-n,m,k = map(int, stdin.readline().split())
-
-shark_cnt = m
-sharks = [[-1,-1,-1]] + [[] for _ in range(m)]
+n,m,k = map(int, input().split())
 shark_board = []
-for i in range(n):
-    tmp = list(map(int, stdin.readline().split()))
-    row = []
-    for j in range(n):
-        if tmp[j] == 0:
-            tmp[j] = 1000
-        row.append([tmp[j],1000])
-        if tmp[j] != 1000:
-            sharks[tmp[j]] = [i,j,-1]
-    shark_board.append(row)
 
-start_shark_dir = list(map(int, stdin.readline().split()))
-for idx in range(m):
-    d = start_shark_dir[idx]
-    sharks[idx+1][2] = d-1
+shark_count = 0
+smell_board = [[[] for _ in range(n)] for _ in range(n)]
+smell_q = deque()
+shark_info = [[] for _ in range(m+1)]
+for x in range(n):
+    shark_board.append(list(map(lambda x:[int(x),0], input().split())))
+    for y in range(n):
+        if shark_board[x][y][0] != 0:
+            shark_num = shark_board[x][y][0]
+            shark_count += 1
+            smell_board[x][y] = [shark_num,k]
+            smell_q.appendleft((x,y))
+            shark_info[shark_num] = [x,y,-1]
 
-smell_board = [[[0,0] for _ in range(n)] for _ in range(n)]
-shark_move = [[]]
+for idx, dir in zip(range(1,m+1),list(map(int, input().split()))):
+    shark_info[idx][2] = dir-1
 
-for _ in range(m):
-    move = []
-    for _ in range(4):
-        tmp = list(map(int,stdin.readline().split()))
-        move.append([tmp[0]-1,tmp[1]-1,tmp[2]-1,tmp[3]-1])
-    shark_move.append(move)
-
+dir_board = [[]] + [[list(map(lambda x:int(x)-1, input().split())) for _ in range(4)] for _ in range(m)]
 def solv():
-    typ = 0
-    for t in range(1,1001):
-        spred_smell(t,typ)
-        move_shark(t,typ)
-        typ = (typ+1)%2
-        if shark_cnt == 1:
-            return t
-    return -1
-
-def spred_smell(t,typ):
-    global smell_board
-    for x,y,d in sharks:
-        if d == -1:
+    t = 0
+    while shark_count > 1 and t < 1000:
+        t += 1
+        move_shark(t)
+        renew_smell_board()
+    if t == 1000 and shark_count != 1:
+        print(-1)
+    else:
+        print(t)
+def move_shark(move_timing):
+    global shark_board, shark_count, shark_info, smell_q
+    for num in range(1,m+1):
+        if not shark_info[num]:
             continue
-        shark_num = shark_board[x][y][typ]
-        smell_board[x][y] = [t+k,shark_num]
 
-def move_shark(t,typ):
-    global shark_cnt,sharks,shark_board
+        x,y,d = shark_info[num]
+        shark_board[x][y] = [0,0]
+        nx,ny,nd = search_next_location(num)
 
-    for x,y,d in sharks:
-        if d == -1:
+        target = shark_board[nx][ny]
+        if target[1] == move_timing:
+            shark_count -= 1
+            if target[0] > num:
+                shark_board[nx][ny][0] = num
+                shark_info[target[0]] = []
+                shark_info[num] = [nx,ny,nd]
+
+            else:
+                shark_info[num] = []
+        else:
+            shark_info[num] = [nx,ny,nd]
+            shark_board[nx][ny] = [num, move_timing]
+
+    for num in range(1,m+1):
+        if not shark_info[num]:
             continue
-        shark_num = shark_board[x][y][typ]
-        smell = []
-        flag = False
+        x,y,d = shark_info[num]
+        if not smell_board[x][y]:
+            smell_q.appendleft((x, y))
 
-        nxt_typ = (typ+1)%2
-        for dir in shark_move[shark_num][d]:
-            nx = x + dx[dir]
-            ny = y + dy[dir]
+        smell_board[x][y] = [num,k+1]
 
-            if point_validator(nx,ny,shark_num,t):
-                if smell_board[nx][ny][0] == 0 or smell_board[nx][ny][0] <= t:
-                    shark_board[x][y][typ] = 1000
-                    if shark_board[nx][ny][nxt_typ] > shark_num:
-                        tmp_shark_num = shark_board[nx][ny][nxt_typ]
+def search_next_location(num):
+    my_smell = []
+    x,y,dir = shark_info[num]
+    for d in dir_board[num][dir]:
+        nx = x + dx[d]
+        ny = y + dy[d]
 
-                        shark_board[nx][ny][nxt_typ] = shark_num
-
-                        if tmp_shark_num != 1000:
-                            sharks[tmp_shark_num][2] = -1
-                            shark_cnt -= 1
-                        sharks[shark_num] = [nx, ny, dir]
-                    else:
-                        sharks[shark_num][2] = -1
-                        shark_cnt -= 1
-                    flag = True
-                    break
-                elif not smell and smell_board[nx][ny][1] == shark_num:
-                    smell = [nx,ny,dir]
-
-        if not flag and smell:
-            nx,ny,dir = smell
-            sharks[shark_num] = [nx, ny, dir]
-
-            shark_board[x][y][typ] = 1000
-            shark_board[nx][ny][nxt_typ] = shark_num
-def point_validator(x,y,shark_num,t):
+        if boundary_validator(nx,ny):
+            if not smell_board[nx][ny]:
+                return nx,ny,d
+            elif smell_board[nx][ny][0] == num and not my_smell:
+                my_smell = [nx,ny,d]
+    return my_smell
+def boundary_validator(x,y):
     if x < 0 or y < 0 or x >= n or y >= n:
-        return False
-    elif smell_board[x][y][1] != 0 and smell_board[x][y][1] != shark_num and smell_board[x][y][0] > t:
         return False
     return True
 
-print(solv())
+def renew_smell_board():
+    global smell_board, smell_q
+
+    q_len = len(smell_q)
+    for _ in range(q_len):
+        x,y = smell_q.pop()
+        # if smell_board[x][y]:?
+        smell_board[x][y][1] -= 1
+        if smell_board[x][y][1] == 0:
+            smell_board[x][y] = []
+        else:
+            smell_q.appendleft((x,y))
+
+solv()
