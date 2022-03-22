@@ -2,71 +2,57 @@ from sys import stdin
 
 input = stdin.readline
 
-n,k = map(int,input().split())
-
-convair = []
-cnts = list(map(int,input().split()))
-for cnt in cnts:
-    convair.append([False,cnt])
-
+n,k = map(int, input().split())
+counts = list(map(int, input().split()))
+belt = [False]*(2*n)
 def solv():
-    cnt = 0
-    ans = 0
-    while True:
-        ans += 1
-        rotate_convair()
-        cnt += rotate_robots()
-        cnt += add_robot()
-        if cnt >= k:
-            return ans
+    zero_count = 0
+    answer = 0
+    while zero_count < k:
+        answer += 1
 
-def rotate_convair():
-    global convair
+        move_belt()
+        zero_count += move_robot()
+        zero_count += insert_robot()
+    print(answer)
+def insert_robot():
+    global belt,counts
+    if counts[0] > 0 and not belt[0]:
+        counts[0] -= 1
+        belt[0] = True
 
-    convair[n-1][0] = False
-    tmp = convair[-1]
-    for idx in range(n*2-1,0,-1):
-        convair[idx] = convair[idx-1]
-    convair[0] = tmp
-    convair[n-1][0] = False
-
-def rotate_robots():
-    global convair
-    cnt = 0
-    for now in range(n*2-1,-1,-1):
-        if not convair[now][0]:
-            continue
-
-        nxt = (now+1)%(n*2)
-
-        if point_validator(nxt):
-            convair[now][0] = False
-            convair[nxt][1] -= 1
-
-            if convair[nxt][1] == 0:
-                cnt += 1
-
-            if convair != n-1:
-                convair[nxt][0] = True
-
-    return cnt
-
-def add_robot():
-    global convair
-
-    if convair[0][1] > 0:
-        convair[0][0] = True
-        convair[0][1] -= 1
-
-        if convair[0][1] == 0:
+        if counts[0] == 0:
             return 1
     return 0
 
-def point_validator(nxt):
-    if convair[nxt][0]:
-        return False
-    elif convair[nxt][1] == 0:
-        return False
-    return True
+def move_robot():
+    global belt,counts
+    first = belt[0]
+    zero_count = 0
+    for idx in range(2*n-1,0,-1):
+        if not belt[idx]:
+            continue
 
-print(solv())
+        nxt = (idx+1)%(2*n)
+
+        if counts[nxt] > 0 and not belt[nxt]:
+            belt[nxt] = True
+            belt[idx] = False
+            counts[nxt] -= 1
+            if counts[nxt] == 0:
+                zero_count += 1
+    if first:
+        counts[1] -= 1
+        if counts[1] == 0:
+            zero_count += 1
+        belt[1] = first
+    return zero_count
+def move_belt():
+    global belt,counts
+
+    belt[n-1] = False
+    belt = belt[-1:]+belt[:-1]
+    counts = counts[-1:]+counts[:-1]
+    belt[n-1] = False
+
+solv()
