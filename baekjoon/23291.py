@@ -1,8 +1,8 @@
 from sys import stdin
 
-dx = [1,0]
-dy = [0,1]
 input = stdin.readline
+dx = [-1,1,0,0]
+dy = [0,0,-1,1]
 
 n,k = map(int, input().split())
 board = [[0]*n for _ in range(n)]
@@ -10,132 +10,98 @@ board[0] = list(map(int, input().split()))
 
 def solv():
     answer = 0
-    while True:
+    while max(board[0])-min(board[0]) > k:
+        answer += 1
         add_fish()
-        stack_rotate()
-        modify_fish_count()
-        set_board()
+        renew_board()
+        adjust_fish()
+        board_to_line()
 
         fold_board()
-        modify_fish_count()
-        set_board()
-        answer += 1
-        if max(board[0])-min(board[0]) <= k:
-            print(answer)
-            return
+        adjust_fish()
+        board_to_line()
+
+        min_fish,max_fish = min(board[0]),max(board[0])
+        if max_fish-min_fish <= k:
+            break
+    print(answer)
 def add_fish():
-    global board
-    target = min(board[0])
+    targets = []
+    min_count = 9876543210
     for idx in range(n):
-        if board[0][idx] == target:
-            board[0][idx] += 1
+        if board[0][idx] < min_count:
+            targets = [idx]
+            min_count = board[0][idx]
+        elif board[0][idx] == min_count:
+            targets.append(idx)
 
-    board[1][1] = board[0][0]
-    board[0][0] = 0
+    for idx in targets:
+        board[0][idx] += 1
 
-def stack_rotate():
-    while True:
-        step = 0
-        length = 0
-        max_x = search_max_x()
-
-        flag=False
-        for y in range(n):
-            if not flag:
-                if board[0][y] == 0:
-                    step += 1
-                else:
-                    flag = True
-                    if board[1][y] != 0:
-                        length = 1
-            else:
-                if board[1][y] != 0:
-                    length += 1
-                else:
-                    break
-        if step > 0:
-            renew_board(step,max_x)
-
-        if board[0][length+max_x-1] == 0:
-            return
-        for x in range(max_x):
-            for y in range(length):
-                board[length-y][length+x],board[x][y] = board[x][y],0
-
-def renew_board(step,max_x):
+def renew_board():
     global board
-    for y in range(step, n):
-        for x in range(max_x):
-            board[x][y-step],board[x][y] = board[x][y],0
-def set_board():
+    l = 1
+    h = 2
+    board[1][0] = board[0][0]
+    board[0] = board[0][1:]+[0]
+
+    while board[0][l+h-1] != 0:
+        for y in range(l):
+            tx = l-y
+            for x in range(h):
+                ty = l+x
+                board[tx][ty],board[x][y] = board[x][y],0
+        for x in range(n):
+            board[x] = board[x][l:]+[0]*l
+        l,h = h,l+1
+
+def adjust_fish():
     global board
-    new_row = []
-    max_x = search_max_x()
-
-    for y in range(n):
-        if board[0][y] == 0:
-            break
-        for x in range(max_x):
-            if board[x][y] == 0:
-                break
-            new_row.append(board[x][y])
-
-    for x in range(max_x):
-        board[x] = [0]*n
-    board[0] = new_row
-
-def fold_board():
-    length = n//2
-    for y in range(length):
-        board[1][n-y-1], board[0][y] = board[0][y], 0
-
-    renew_board(length,2)
-
-    length = n//4
-    for x in range(2):
-        for y in range(length):
-            board[3-x][n//2-y-1],board[x][y]=board[x][y],0
-
-    renew_board(length, 4)
-
-def modify_fish_count():
-    global board
-
-    tmp = [[0]*n for _ in range(n)]
-    for x in range(n):
-        if board[x][0] == 0:
-            break
-        for y in range(n):
-            if board[x][y] == 0:
-                break
-            for dir in range(2):
-                nx = x + dx[dir]
-                ny = y + dy[dir]
-
-                if point_validator(nx,ny):
-                    d = abs(board[x][y]-board[nx][ny])//5
-                    if board[x][y] > board[nx][ny]:
-                        tmp[x][y] -= d
-                        tmp[nx][ny] += d
-                    elif board[x][y] < board[nx][ny]:
-                        tmp[nx][ny] -= d
-                        tmp[x][y] += d
-
+    targets = []
     for x in range(n):
         for y in range(n):
-            board[x][y] += tmp[x][y]
-def point_validator(x,y):
-    if x < 0 or y < 0 or x >= n or y >= n:
-        return False
-    elif board[x][y] == 0:
-        return False
-    return True
-def search_max_x():
+
+            for d in range(4):
+                nx = x + dx[d]
+                ny = y + dy[d]
+
+                if point_validator(x,y,nx,ny):
+                    amount = (board[x][y] - board[nx][ny])//5
+                    targets.append((x,y,-amount))
+                    targets.append((nx,ny,amount))
+
+    for x,y,amount in targets:
+        board[x][y] += amount
+
+def board_to_line():
+    global board
+    line = []
     for y in range(n):
-        if board[0][y] == 0:
-            continue
         for x in range(n):
             if board[x][y] == 0:
-                return x
-    return n
+                break
+            line.append(board[x][y])
+            board[x][y] = 0
+
+    board[0] = line
+
+def fold_board():
+    global board
+    first_length = n//2
+    for y in range(first_length):
+        board[1][first_length+y],board[0][first_length-y-1] = board[0][first_length-y-1],0
+
+    for y in range(n//4):
+        board[3][n-1-y],board[0][first_length+y] = board[0][first_length+y],0
+        board[2][n-1-y],board[1][first_length+y] = board[1][first_length+y],0
+
+
+def point_validator(x,y,nx,ny):
+    if nx < 0 or ny < 0 or nx >= n or ny >= n:
+        return False
+    elif board[nx][ny] == 0:
+        return False
+    elif board[x][y] <= board[nx][ny]:
+        return False
+    return True
 solv()
