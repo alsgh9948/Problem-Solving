@@ -1,33 +1,31 @@
 from sys import stdin
+
 input = stdin.readline
 
 n,c = map(int, input().split())
+points = [int(input()) for _ in range(n)]
 
-wifi = []
-for _ in range(n):
-    wifi.append(int(input()))
-
-wifi.sort()
+points.sort()
 def solv():
     left = 0
-    right = wifi[n-1]
+    right = points[-1]
 
     while left <= right:
         length = (left+right)//2
 
-        start = wifi[0]
+        before = points[0]
         cnt = 1
-        for end in wifi:
-            if end - start >= length:
+        for now in points[1:]:
+            if now-before >= length:
                 cnt += 1
-                start = end
+                before = now
 
-            if cnt > c:
-                break
-        if cnt < c:
-            right = length - 1
+                if cnt > c:
+                    break
+
+        if cnt >= c:
+            left = length+1
         else:
-            left = length + 1
-    return right
-
-print(solv())
+            right = length-1
+    print(right)
+solv()
