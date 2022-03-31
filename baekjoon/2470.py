@@ -3,24 +3,32 @@ from sys import stdin
 input = stdin.readline
 
 n = int(input())
-nums = list(map(int, input().split()))
-nums.sort()
+
+arr = list(map(int, input().split()))
+
+arr.sort()
 def solv():
-    left = 0
-    right = n-1
-    target = 98765432100
+    answer_sum = 9876543210
     answer_left = 0
-    answer_right = n-1
-    while left < right:
-        tmp = nums[left]+nums[right]
-        if abs(tmp) < target:
-            target = abs(tmp)
-            answer_left,answer_right = left,right
-        if tmp > 0:
-            right -= 1
-        elif tmp < 0:
-            left += 1
-        else:
-            break
-    print(nums[answer_left],nums[answer_right])
+    answer_right = 0
+    for idx in range(n-1):
+        left = idx+1
+        right = n-1
+
+        while left <= right:
+            mid = (left+right)//2
+            tmp_sum = arr[idx]+arr[mid]
+            if abs(tmp_sum) < abs(answer_sum):
+                answer_sum = tmp_sum
+                answer_left = idx
+                answer_right = mid
+
+            if tmp_sum > 0:
+                right = mid-1
+            elif tmp_sum < 0:
+                left = mid+1
+            else:
+                print(arr[answer_left], arr[answer_right])
+                return
+    print(arr[answer_left],arr[answer_right])
 solv()
